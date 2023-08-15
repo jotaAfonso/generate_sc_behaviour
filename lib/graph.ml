@@ -40,7 +40,7 @@ let rec dfs (_list : (string * (string * string) list) list) _src (_path : strin
     let module A = A (Sigma) in
     let lang = 
       match reg with 
-      Seq (r1, r2) -> Printf.printf "Sou Seq if %b\n" (Regex.equal r1 r2); if Regex.equal r1 r2 then A.gen2 reg else A.gen reg
+      Seq (r1, r2) ->  if Regex.equal r1 r2 then A.gen2 reg else A.gen reg
       | _ -> A.gen reg in
     try
       let _ = Iter.take 1 @@ A.flatten lang |> Fmt.pr "%a@." (CCFormat.seq ~sep:(Fmt.any "@.") Word.String.pp) in
