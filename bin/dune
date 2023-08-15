@@ -1,0 +1,4 @@
+(executable
+ (public_name generate_sc_behaviour)
+ (name main)
+ (libraries lib_generate segments))

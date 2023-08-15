@@ -1,0 +1,15 @@
+description = ""
+requires = "containers fmt generate_sc_behaviour.segments iter qcheck"
+archive(byte) = "generate_sc_behaviour.cma"
+archive(native) = "generate_sc_behaviour.cmxa"
+plugin(byte) = "generate_sc_behaviour.cma"
+plugin(native) = "generate_sc_behaviour.cmxs"
+package "segments" (
+  directory = "segments"
+  description = ""
+  requires = "containers containers.data containers.iter fmt iter oseq"
+  archive(byte) = "segments.cma"
+  archive(native) = "segments.cmxa"
+  plugin(byte) = "segments.cma"
+  plugin(native) = "segments.cmxs"
+)

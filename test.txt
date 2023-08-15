@@ -1,0 +1,62 @@
+data StateType 		
+  = I  
+  | O 
+  | A 
+    deriving (Eq, Show)
+
+data StateType 
+  = ItemAvailable  
+  | OfferPlaced 
+  | Accepted 
+    deriving (Eq, Show)
+
+template Market
+  with 
+    owner       : Party
+    buyer       : Party
+    state       : StateType
+
+  where
+    signatory owner 
+    ensure owner /= buyer  
+    observer buyer
+
+    nonconsuming choice Reject : ItemId
+      with
+        descriptionParam : Text
+        askingPriceParam : Int
+        ownerParam       : Party
+      controller owner
+        do
+          assertMsg "Item is not available for an offer." this.state == O
+
+          create Market with
+            state  = I
+
+    choice MakeOffer : (MarketId, OfferId)
+      with
+        item                 : ItemId
+        observerSellerParam  : Party
+        offerPriceParam      : Int
+        buyerParam           : Party 
+      controller buyer
+        do 
+          assertMsg "Item is not available for an offer." (this.state == I)
+          
+          
+          market <- create this with
+            state = O
+            
+    choice MakeOffer : (MarketId, OfferId)
+      with
+        item                 : ItemId
+        observerSellerParam  : Party
+        offerPriceParam      : Int
+        buyerParam           : Party 
+      controller buyer
+        do 
+          assertMsg "Item is not available for an offer." (this.state == O)
+          
+          
+          market <- create this with
+            state = A

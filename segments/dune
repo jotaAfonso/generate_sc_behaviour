@@ -1,0 +1,5 @@
+(library
+ (name segments)
+ (public_name generate_sc_behaviour.segments)
+ (libraries fmt iter containers.data containers.iter oseq containers)
+ (ocamlopt_flags :standard "-O3"))

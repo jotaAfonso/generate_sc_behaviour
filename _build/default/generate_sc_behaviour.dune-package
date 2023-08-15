@@ -1,0 +1,163 @@
+(lang dune 3.9)
+(name generate_sc_behaviour)
+(sections (lib .) (libexec .) (bin ../../bin))
+(files
+ (lib
+  (META
+   dune-package
+   extractSC.ml
+   generate_sc_behaviour.a
+   generate_sc_behaviour.cma
+   generate_sc_behaviour.cmi
+   generate_sc_behaviour.cmt
+   generate_sc_behaviour.cmx
+   generate_sc_behaviour.cmxa
+   generate_sc_behaviour.ml
+   generate_sc_behaviour__ExtractSC.cmi
+   generate_sc_behaviour__ExtractSC.cmt
+   generate_sc_behaviour__ExtractSC.cmx
+   generate_sc_behaviour__Graph.cmi
+   generate_sc_behaviour__Graph.cmt
+   generate_sc_behaviour__Graph.cmx
+   generate_sc_behaviour__Model.cmi
+   generate_sc_behaviour__Model.cmt
+   generate_sc_behaviour__Model.cmx
+   graph.ml
+   model.ml
+   opam
+   segments/Heap.ml
+   segments/LazyList.ml
+   segments/Segments.ml
+   segments/Sigs.ml
+   segments/StrictSet.ml
+   segments/ThunkList.ml
+   segments/ThunkListMemo.ml
+   segments/Trie.ml
+   segments/Trie.mli
+   segments/segments.a
+   segments/segments.cma
+   segments/segments.cmi
+   segments/segments.cmt
+   segments/segments.cmx
+   segments/segments.cmxa
+   segments/segments__.cmi
+   segments/segments__.cmt
+   segments/segments__.cmx
+   segments/segments__.ml
+   segments/segments__Heap.cmi
+   segments/segments__Heap.cmt
+   segments/segments__Heap.cmx
+   segments/segments__LazyList.cmi
+   segments/segments__LazyList.cmt
+   segments/segments__LazyList.cmx
+   segments/segments__Sigs.cmi
+   segments/segments__Sigs.cmt
+   segments/segments__Sigs.cmx
+   segments/segments__StrictSet.cmi
+   segments/segments__StrictSet.cmt
+   segments/segments__StrictSet.cmx
+   segments/segments__ThunkList.cmi
+   segments/segments__ThunkList.cmt
+   segments/segments__ThunkList.cmx
+   segments/segments__ThunkListMemo.cmi
+   segments/segments__ThunkListMemo.cmt
+   segments/segments__ThunkListMemo.cmx
+   segments/segments__Trie.cmi
+   segments/segments__Trie.cmt
+   segments/segments__Trie.cmti
+   segments/segments__Trie.cmx))
+ (libexec (generate_sc_behaviour.cmxs segments/segments.cmxs))
+ (bin (generate_sc_behaviour)))
+(library
+ (name generate_sc_behaviour)
+ (kind normal)
+ (archives
+  (byte generate_sc_behaviour.cma)
+  (native generate_sc_behaviour.cmxa))
+ (plugins
+  (byte generate_sc_behaviour.cma)
+  (native generate_sc_behaviour.cmxs))
+ (native_archives generate_sc_behaviour.a)
+ (requires generate_sc_behaviour.segments fmt iter qcheck containers)
+ (main_module_name Generate_sc_behaviour)
+ (modes byte native)
+ (modules
+  (wrapped
+   (group
+    (alias
+     (obj_name generate_sc_behaviour)
+     (visibility public)
+     (kind alias)
+     (source
+      (path Generate_sc_behaviour)
+      (impl (path generate_sc_behaviour.ml-gen))))
+    (name Generate_sc_behaviour)
+    (modules
+     (module
+      (obj_name generate_sc_behaviour__ExtractSC)
+      (visibility public)
+      (source (path ExtractSC) (impl (path extractSC.ml))))
+     (module
+      (obj_name generate_sc_behaviour__Graph)
+      (visibility public)
+      (source (path Graph) (impl (path graph.ml))))
+     (module
+      (obj_name generate_sc_behaviour__Model)
+      (visibility public)
+      (source (path Model) (impl (path model.ml))))))
+   (wrapped true))))
+(library
+ (name generate_sc_behaviour.segments)
+ (kind normal)
+ (archives (byte segments/segments.cma) (native segments/segments.cmxa))
+ (plugins (byte segments/segments.cma) (native segments/segments.cmxs))
+ (native_archives segments/segments.a)
+ (requires fmt iter containers.data containers.iter oseq containers)
+ (main_module_name Segments)
+ (modes byte native)
+ (modules
+  (wrapped
+   (group
+    (alias
+     (obj_name segments__)
+     (visibility public)
+     (kind alias)
+     (source (path Segments__) (impl (path segments/segments__.ml-gen))))
+    (name Segments)
+    (modules
+     (module
+      (obj_name segments__Heap)
+      (visibility public)
+      (source (path Heap) (impl (path segments/Heap.ml))))
+     (module
+      (obj_name segments__LazyList)
+      (visibility public)
+      (source (path LazyList) (impl (path segments/LazyList.ml))))
+     (module
+      (obj_name segments)
+      (visibility public)
+      (source (path Segments) (impl (path segments/Segments.ml))))
+     (module
+      (obj_name segments__Sigs)
+      (visibility public)
+      (source (path Sigs) (impl (path segments/Sigs.ml))))
+     (module
+      (obj_name segments__StrictSet)
+      (visibility public)
+      (source (path StrictSet) (impl (path segments/StrictSet.ml))))
+     (module
+      (obj_name segments__ThunkList)
+      (visibility public)
+      (source (path ThunkList) (impl (path segments/ThunkList.ml))))
+     (module
+      (obj_name segments__ThunkListMemo)
+      (visibility public)
+      (source (path ThunkListMemo) (impl (path segments/ThunkListMemo.ml))))
+     (module
+      (obj_name segments__Trie)
+      (visibility public)
+      (source
+       (path Trie)
+       (intf (path segments/Trie.mli))
+       (impl (path segments/Trie.ml))))))
+   (wrapped true))))
