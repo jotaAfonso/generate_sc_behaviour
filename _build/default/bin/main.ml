@@ -27,7 +27,7 @@ let rec _print_edge (x : (string * (string * string) list) list) =
 let rec print_paths (x : string list list) = 
   match x with 
     [] -> ()
-    | x :: xs -> Printf.printf "Main Path : %s\n" @@ String.concat " " x; print_paths xs 
+    | x :: xs -> Printf.printf "Possible positive path: %s\n" @@ String.concat " " x; print_paths xs 
 ;;
 
 

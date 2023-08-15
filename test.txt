@@ -1,7 +1,8 @@
 data StateType 		
   = I  
   | O 
-  | A 
+  | A
+  | B 
     deriving (Eq, Show)
 
 data StateType 
@@ -60,3 +61,30 @@ template Market
           
           market <- create this with
             state = A
+            
+   choice Further : (MarketId, OfferId)
+      with
+        item                 : ItemId
+        observerSellerParam  : Party
+        offerPriceParam      : Int
+        buyerParam           : Party 
+      controller buyer
+        do 
+          assertMsg "Item is not available for an offer." (this.state == A)
+          
+          
+          market <- create this with
+            state = B
+   choice Once : (MarketId, OfferId)
+      with
+        item                 : ItemId
+        observerSellerParam  : Party
+        offerPriceParam      : Int
+        buyerParam           : Party 
+      controller buyer
+        do 
+          assertMsg "Item is not available for an offer." (this.state == B)
+          
+          
+          market <- create this with
+            state = I

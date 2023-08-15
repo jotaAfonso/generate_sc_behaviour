@@ -1,5 +1,4 @@
 open Model
-open Parsing
 
 let allpaths = ref []
 
@@ -28,23 +27,41 @@ module type S =
 let get_impl_mod : segment_impl -> (module S) = let open Segments in function
   | ThunkList -> (module ThunkList)
 
+let subWord p wordl t i = 
+  String.sub p (String.length p - (wordl * t) - i) wordl
+;;
+
+let rec uniquepathindex p s i : bool =
+  let w = String.sub p (String.length p - s) s in 
+  if (String.length w) * 3 <= ((String.length p) - i) then 
+    let wordl = String.length w in 
+    if Bool.(&&) (String.equal (subWord p wordl 1 i) (subWord p wordl 3 i)) (String.equal (subWord p wordl 1 i) (subWord p wordl 2 i))   
+      then false 
+      else Bool.(&&) true @@ uniquepathindex p s (i + 1)
+  else true
+
+let rec uniquepathsize p s i : bool =
+  let w = String.sub p (String.length p - s) s in 
+  if (String.length w) * 3 <= (String.length p) then 
+    let wordl = String.length w in 
+    if Bool.(&&) (String.equal (subWord p wordl 1 i) (subWord p wordl 3 i )) (String.equal (subWord p wordl 1 i) (subWord p wordl 2 i))  
+      then false 
+      else Bool.(&&) (uniquepathindex p s i) @@ uniquepathsize p (s + 1) i
+  else 
+    true  
+
 let rec dfs (_list : (string * (string * string) list) list) _src (_path : string list) counter =
   if counter < 20 then
     let module M = (val get_impl_mod ThunkList) in
     let module S = M(Word.String) in
     let module A = Regenerate.Make (Word.String) (S) in
-    let reg = Result.get_ok @@ parse (String.concat "" _path) in
-    let default = CCString.of_list @@ CCOpt.get_exn @@ Regex.enumerate ' ' '~' in
-    let sigma = S.of_list @@ List.map Word.String.singleton @@ CCString.to_list default in
-    let module Sigma = struct type t = S.t let sigma = sigma end in
-    let module A = A (Sigma) in
-    let lang = 
-      match reg with 
-      Seq (r1, r2) -> Printf.printf "Sou Seq if %b\n" (Regex.equal r1 r2); if Regex.equal r1 r2 then A.gen2 reg else A.gen reg
-      | _ -> A.gen reg in
+    
+    let local_path = String.concat "" _path in
+    let check = uniquepathsize local_path 1 0 in
+    
     try
-      let _ = Iter.take 1 @@ A.flatten lang |> Fmt.pr "%a@." (CCFormat.seq ~sep:(Fmt.any "@.") Word.String.pp) in
-      allpaths := !allpaths @ [_path];
+      if check then 
+        allpaths := !allpaths @ [_path];
       let (_, filter) = List.find (fun (a,_ ) -> String.equal a _src) _list in 
       List.iter (fun (_, y) -> let npath = _path @ [y] in dfs _list y npath (counter + 1)) filter;
     with
