@@ -51,11 +51,7 @@ let rec uniquepathsize p s i : bool =
     true  
 
 let rec dfs (_list : (string * (string * string) list) list) _src (_path : string list) counter =
-  if counter < 20 then
-    let module M = (val get_impl_mod ThunkList) in
-    let module S = M(Word.String) in
-    let module A = Regenerate.Make (Word.String) (S) in
-    
+  if counter < 20 then    
     let local_path = String.concat "" _path in
     let check = uniquepathsize local_path 1 0 in
     
@@ -74,8 +70,8 @@ let find_all_paths (list : (string * (string * string) list) list) src =
   !allpaths;
 ;;
 
-let generate_graph (_ops : operation list) = 
-  let edges = List.map (fun (x : operation) -> (x.requiredState, [x.operationlabel, x.resultState])) _ops in 
+let generate_graph (_ops : Contract.operation list) = 
+  let edges = List.map (fun (x : Contract.operation) -> (x.requiredState, [x.operationlabel, x.resultState])) _ops in 
   let result = List.map (fun (x,_) -> x, List.concat @@ List.map (fun (_, b) -> b) @@ List.filter (fun (z,_) -> String.equal z x) edges) edges in
   let uniq_cons x xs = if List.mem x xs then xs else x :: xs in 
   List.fold_right uniq_cons result []

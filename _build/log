@@ -1,9 +1,9 @@
-# dune exec -- ./main.exe
+# dune exec -- ./bin/main.exe
 # OCAMLPARAM: unset
 # Shared cache: disabled
 # Workspace root: /home/camel/Desktop/generate_sc_behaviour
 # Auto-detected concurrency: 2
-$ /home/camel/.opam/cs3110-2022fa/bin/ocamlc.opt -config > /tmp/dune_5ed2eb_output
+$ /home/camel/.opam/cs3110-2022fa/bin/ocamlc.opt -config > /tmp/dune_fe15ce_output
 # Dune context:
 #  { name = "default"
 #  ; kind = "default"
@@ -110,5 +110,3 @@ $ /home/camel/.opam/cs3110-2022fa/bin/ocamlc.opt -config > /tmp/dune_5ed2eb_outp
 #      ; windows_unicode = false
 #      }
 #  }
-$ (cd _build/default && /home/camel/.opam/cs3110-2022fa/bin/ocamlopt.opt -w @1..3@5..28@30..39@43@46..47@49..57@61..62@67@69-40 -strict-sequence -strict-formats -short-paths -keep-locs -g -I bin/.main.eobjs/byte -I bin/.main.eobjs/native -I /home/camel/.opam/cs3110-2022fa/lib/containers -I /home/camel/.opam/cs3110-2022fa/lib/containers/data -I /home/camel/.opam/cs3110-2022fa/lib/containers/iter -I /home/camel/.opam/cs3110-2022fa/lib/containers/monomorphic -I /home/camel/.opam/cs3110-2022fa/lib/fmt -I /home/camel/.opam/cs3110-2022fa/lib/iter -I /home/camel/.opam/cs3110-2022fa/lib/oseq -I /home/camel/.opam/cs3110-2022fa/lib/ounit2 -I /home/camel/.opam/cs3110-2022fa/lib/ounit2/advanced -I /home/camel/.opam/cs3110-2022fa/lib/qcheck -I /home/camel/.opam/cs3110-2022fa/lib/qcheck-core -I /home/camel/.opam/cs3110-2022fa/lib/qcheck-core/runner -I /home/camel/.opam/cs3110-2022fa/lib/qcheck-ounit -I /home/camel/.opam/cs3110-2022fa/lib/seq -I /home/camel/.opam/cs3110-2022fa/lib/stdlib-shims -I lib/.lib_generate.objs/byte -I lib/.lib_generate.objs/native -I segments/.segments.objs/byte -I segments/.segments.objs/native -intf-suffix .ml -no-alias-deps -opaque -o bin/.main.eobjs/native/dune__exe__Main.cmx -c -impl bin/main.ml)
-$ (cd _build/default && /home/camel/.opam/cs3110-2022fa/bin/ocamlopt.opt -w @1..3@5..28@30..39@43@46..47@49..57@61..62@67@69-40 -strict-sequence -strict-formats -short-paths -keep-locs -g -o bin/main.exe /home/camel/.opam/cs3110-2022fa/lib/fmt/fmt.cmxa /home/camel/.opam/cs3110-2022fa/lib/iter/iter.cmxa /home/camel/.opam/cs3110-2022fa/lib/containers/monomorphic/containers_monomorphic.cmxa /home/camel/.opam/cs3110-2022fa/lib/containers/containers.cmxa /home/camel/.opam/cs3110-2022fa/lib/containers/data/containers_data.cmxa /home/camel/.opam/cs3110-2022fa/lib/containers/iter/containers_iter.cmxa /home/camel/.opam/cs3110-2022fa/lib/oseq/oseq.cmxa segments/segments.cmxa /home/camel/.opam/cs3110-2022fa/lib/ocaml/str.cmxa -I /home/camel/.opam/cs3110-2022fa/lib/ocaml /home/camel/.opam/cs3110-2022fa/lib/ocaml/unix.cmxa -I /home/camel/.opam/cs3110-2022fa/lib/ocaml -I /home/camel/.opam/cs3110-2022fa/lib/ocaml /home/camel/.opam/cs3110-2022fa/lib/qcheck-core/qcheck_core.cmxa /home/camel/.opam/cs3110-2022fa/lib/qcheck-core/runner/qcheck_runner.cmxa /home/camel/.opam/cs3110-2022fa/lib/stdlib-shims/stdlib_shims.cmxa /home/camel/.opam/cs3110-2022fa/lib/ounit2/advanced/oUnitAdvanced.cmxa /home/camel/.opam/cs3110-2022fa/lib/ounit2/oUnit.cmxa /home/camel/.opam/cs3110-2022fa/lib/qcheck-ounit/qcheck_ounit.cmxa /home/camel/.opam/cs3110-2022fa/lib/qcheck/qcheck.cmxa lib/lib_generate.cmxa bin/.main.eobjs/native/dune__exe__Main.cmx)

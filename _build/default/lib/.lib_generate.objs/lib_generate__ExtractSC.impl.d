@@ -1,1 +1,1 @@
-lib/extractSC.ml: Bool List Model Str String
+lib/extractSC.ml: Bool Contract List Model Str String

@@ -45,12 +45,13 @@ let rec getTemplateLabel lines : string =
       else getTemplateLabel xs
 ;;
 
-let rec getParams lines = 
+let rec getParams lines : Contract.parameter list = 
   match lines with
    [] -> []
   | x :: xs -> if contains x ":" 
       then let split_param = (x |> String.split_on_char ':') in 
-        [ { parameterLabel = String.trim @@ List.nth split_param 0; typeLabel = String.trim @@ List.nth split_param 1} ] @getParams xs 
+        let result : Contract.parameter = { labelOfParam = (String.trim @@ List.nth split_param 0); typeLabel = String.trim @@ List.nth split_param 1 } in
+        [ result ] @ getParams xs 
       else getParams xs
 ;;
  
@@ -67,7 +68,7 @@ let treatStates lines =
 ;;
 
 (*Extracts constructor*)
-let treatDeploy lines =
+let treatDeploy lines : Contract.template =
   let eDeploy = (extractDeploy lines false) |> List.filter (fun s -> s <> "") in 
   let lTLabel = getTemplateLabel eDeploy in 
   let lParams = getParams eDeploy in 
@@ -101,7 +102,7 @@ let extractRequiredState line : string =
       ""
 ;;
 
-let rec extractMethods (lines : string list) flag operation deploy =
+let rec extractMethods (lines : string list) flag (operation : Contract.operation) (deploy : Contract.template) : Contract.operation list=
   match (lines , flag) with
     [] , _ -> []
     | x :: xs, false -> if contains x "choice" 

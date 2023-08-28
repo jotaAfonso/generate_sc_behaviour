@@ -1,30 +1,55 @@
-(lang dune 3.9)
+(lang dune 3.10)
 (name generate_sc_behaviour)
 (sections (lib .) (libexec .) (bin ../../bin))
 (files
  (lib
   (META
+   dfa.ml
+   dfa.mli
    dune-package
    extractSC.ml
-   generate_sc_behaviour.a
-   generate_sc_behaviour.cma
-   generate_sc_behaviour.cmi
-   generate_sc_behaviour.cmt
-   generate_sc_behaviour.cmx
-   generate_sc_behaviour.cmxa
-   generate_sc_behaviour.ml
-   generate_sc_behaviour__ExtractSC.cmi
-   generate_sc_behaviour__ExtractSC.cmt
-   generate_sc_behaviour__ExtractSC.cmx
-   generate_sc_behaviour__Graph.cmi
-   generate_sc_behaviour__Graph.cmt
-   generate_sc_behaviour__Graph.cmx
-   generate_sc_behaviour__Model.cmi
-   generate_sc_behaviour__Model.cmt
-   generate_sc_behaviour__Model.cmx
    graph.ml
+   langgen.ml
+   lib_generate.a
+   lib_generate.cma
+   lib_generate.cmi
+   lib_generate.cmt
+   lib_generate.cmx
+   lib_generate.cmxa
+   lib_generate.ml
+   lib_generate__Dfa.cmi
+   lib_generate__Dfa.cmt
+   lib_generate__Dfa.cmti
+   lib_generate__Dfa.cmx
+   lib_generate__ExtractSC.cmi
+   lib_generate__ExtractSC.cmt
+   lib_generate__ExtractSC.cmx
+   lib_generate__Graph.cmi
+   lib_generate__Graph.cmt
+   lib_generate__Graph.cmx
+   lib_generate__Langgen.cmi
+   lib_generate__Langgen.cmt
+   lib_generate__Langgen.cmx
+   lib_generate__Model.cmi
+   lib_generate__Model.cmt
+   lib_generate__Model.cmx
+   lib_generate__Parsing.cmi
+   lib_generate__Parsing.cmt
+   lib_generate__Parsing.cmx
+   lib_generate__Regenerate.cmi
+   lib_generate__Regenerate.cmt
+   lib_generate__Regenerate.cmx
+   lib_generate__Regex.cmi
+   lib_generate__Regex.cmt
+   lib_generate__Regex.cmx
+   lib_generate__Word.cmi
+   lib_generate__Word.cmt
+   lib_generate__Word.cmx
    model.ml
    opam
+   parsing.ml
+   regenerate.ml
+   regex.ml
    segments/Heap.ml
    segments/LazyList.ml
    segments/Segments.ml
@@ -65,46 +90,65 @@
    segments/segments__Trie.cmi
    segments/segments__Trie.cmt
    segments/segments__Trie.cmti
-   segments/segments__Trie.cmx))
- (libexec (generate_sc_behaviour.cmxs segments/segments.cmxs))
+   segments/segments__Trie.cmx
+   word.ml))
+ (libexec (lib_generate.cmxs segments/segments.cmxs))
  (bin (generate_sc_behaviour)))
 (library
  (name generate_sc_behaviour)
  (kind normal)
- (archives
-  (byte generate_sc_behaviour.cma)
-  (native generate_sc_behaviour.cmxa))
- (plugins
-  (byte generate_sc_behaviour.cma)
-  (native generate_sc_behaviour.cmxs))
- (native_archives generate_sc_behaviour.a)
- (requires generate_sc_behaviour.segments fmt iter qcheck containers)
- (main_module_name Generate_sc_behaviour)
+ (archives (byte lib_generate.cma) (native lib_generate.cmxa))
+ (plugins (byte lib_generate.cma) (native lib_generate.cmxs))
+ (native_archives lib_generate.a)
+ (requires generate_sc_behaviour.segments str fmt iter qcheck)
+ (main_module_name Lib_generate)
  (modes byte native)
  (modules
   (wrapped
    (group
     (alias
-     (obj_name generate_sc_behaviour)
+     (obj_name lib_generate)
      (visibility public)
      (kind alias)
-     (source
-      (path Generate_sc_behaviour)
-      (impl (path generate_sc_behaviour.ml-gen))))
-    (name Generate_sc_behaviour)
+     (source (path Lib_generate) (impl (path lib_generate.ml-gen))))
+    (name Lib_generate)
     (modules
      (module
-      (obj_name generate_sc_behaviour__ExtractSC)
+      (obj_name lib_generate__Dfa)
+      (visibility public)
+      (source (path Dfa) (intf (path dfa.mli)) (impl (path dfa.ml))))
+     (module
+      (obj_name lib_generate__ExtractSC)
       (visibility public)
       (source (path ExtractSC) (impl (path extractSC.ml))))
      (module
-      (obj_name generate_sc_behaviour__Graph)
+      (obj_name lib_generate__Graph)
       (visibility public)
       (source (path Graph) (impl (path graph.ml))))
      (module
-      (obj_name generate_sc_behaviour__Model)
+      (obj_name lib_generate__Langgen)
       (visibility public)
-      (source (path Model) (impl (path model.ml))))))
+      (source (path Langgen) (impl (path langgen.ml))))
+     (module
+      (obj_name lib_generate__Model)
+      (visibility public)
+      (source (path Model) (impl (path model.ml))))
+     (module
+      (obj_name lib_generate__Parsing)
+      (visibility public)
+      (source (path Parsing) (impl (path parsing.ml))))
+     (module
+      (obj_name lib_generate__Regenerate)
+      (visibility public)
+      (source (path Regenerate) (impl (path regenerate.ml))))
+     (module
+      (obj_name lib_generate__Regex)
+      (visibility public)
+      (source (path Regex) (impl (path regex.ml))))
+     (module
+      (obj_name lib_generate__Word)
+      (visibility public)
+      (source (path Word) (impl (path word.ml))))))
    (wrapped true))))
 (library
  (name generate_sc_behaviour.segments)

@@ -1,14 +1,7 @@
 data StateType 		
-  = I  
-  | O 
-  | A
-  | B 
-    deriving (Eq, Show)
-
-data StateType 
-  = ItemAvailable  
-  | OfferPlaced 
-  | Accepted 
+  = Q0  
+  | Q1
+  | Q2
     deriving (Eq, Show)
 
 template Market
@@ -22,69 +15,44 @@ template Market
     ensure owner /= buyer  
     observer buyer
 
-    nonconsuming choice Reject : ItemId
-      with
-        descriptionParam : Text
-        askingPriceParam : Int
-        ownerParam       : Party
+    choice O : ItemId
       controller owner
         do
-          assertMsg "Item is not available for an offer." this.state == O
+          assertMsg "Item is not available for an offer." this.state == Q0
 
           create Market with
-            state  = I
+            state  = Q2
 
-    choice MakeOffer : (MarketId, OfferId)
-      with
-        item                 : ItemId
-        observerSellerParam  : Party
-        offerPriceParam      : Int
-        buyerParam           : Party 
-      controller buyer
-        do 
-          assertMsg "Item is not available for an offer." (this.state == I)
-          
-          
-          market <- create this with
-            state = O
-            
-    choice MakeOffer : (MarketId, OfferId)
-      with
-        item                 : ItemId
-        observerSellerParam  : Party
-        offerPriceParam      : Int
-        buyerParam           : Party 
-      controller buyer
-        do 
-          assertMsg "Item is not available for an offer." (this.state == O)
-          
-          
-          market <- create this with
-            state = A
-            
-   choice Further : (MarketId, OfferId)
-      with
-        item                 : ItemId
-        observerSellerParam  : Party
-        offerPriceParam      : Int
-        buyerParam           : Party 
-      controller buyer
-        do 
-          assertMsg "Item is not available for an offer." (this.state == A)
-          
-          
-          market <- create this with
-            state = B
-   choice Once : (MarketId, OfferId)
-      with
-        item                 : ItemId
-        observerSellerParam  : Party
-        offerPriceParam      : Int
-        buyerParam           : Party 
-      controller buyer
-        do 
-          assertMsg "Item is not available for an offer." (this.state == B)
-          
-          
-          market <- create this with
-            state = I
+    choice 1 : ItemId
+      controller owner
+        do
+          assertMsg "Item is not available for an offer." this.state == Q0
+
+          create Market with
+            state  = Q1
+
+    choice O : ItemId
+      controller owner
+        do
+          assertMsg "Item is not available for an offer." this.state == Q1
+
+          create Market with
+            state  = Q1
+
+      choice 1 : ItemId
+      controller owner
+        do
+          assertMsg "Item is not available for an offer." this.state == Q1
+
+          create Market with
+            state  = Q1
+
+      choice O : ItemId
+      controller owner
+        do
+          assertMsg "Item is not available for an offer." this.state == Q2
+
+          create Market with
+            state  = Q1
+
+  

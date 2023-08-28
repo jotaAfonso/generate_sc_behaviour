@@ -70,8 +70,8 @@ let find_all_paths (list : (string * (string * string) list) list) src =
   !allpaths;
 ;;
 
-let generate_graph (_ops : operation list) = 
-  let edges = List.map (fun (x : operation) -> (x.requiredState, [x.operationlabel, x.resultState])) _ops in 
+let generate_graph (_ops : Contract.operation list) = 
+  let edges = List.map (fun (x : Contract.operation) -> (x.requiredState, [x.operationlabel, x.resultState])) _ops in 
   let result = List.map (fun (x,_) -> x, List.concat @@ List.map (fun (_, b) -> b) @@ List.filter (fun (z,_) -> String.equal z x) edges) edges in
   let uniq_cons x xs = if List.mem x xs then xs else x :: xs in 
   List.fold_right uniq_cons result []

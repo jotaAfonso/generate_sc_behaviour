@@ -1,11 +1,11 @@
-(*
-let rec print_methods (ls : operation list) = 
+open Lib_generate.Model.Contract
+
+let rec _print_methods (ls : operation list) = 
   match ls with
     [] -> ()
-    | x :: xs -> Printf.printf "%s\n" x.label; Printf.printf "%s\n" x.requiredState; Printf.printf "%s\n" x.resultState; print_methods xs
+    | x :: xs -> Printf.printf "%s\n" x.operationlabel; Printf.printf "%s\n" x.requiredState; Printf.printf "%s\n" x.resultState; _print_methods xs
 ;;
 
-*)
 let rec _print_list ls = 
   match ls with
     [] -> ()
@@ -15,19 +15,19 @@ let rec _print_list ls =
 let rec print_op (ls : (string * string) list) =
   match ls with
     [] -> ()
-    | (x,y) :: xs -> Printf.printf "edge1 - %s\n" x; Printf.printf "edge2 - %s\n" y; print_op xs
+    | (x,y) :: xs -> Printf.printf "label - %s\n" x; Printf.printf "target State - %s\n" y; print_op xs
 ;;
 
 let rec _print_edge (x : (string * (string * string) list) list) = 
   match x with
     [] -> ()
-    | (x,y) :: xs -> Printf.printf "origin - %s\n" x; print_op y; _print_edge xs
+    | (x,y) :: xs -> Printf.printf "init State - %s\n" x; print_op y; Printf.printf "\n"; _print_edge xs
 ;;
 
-let rec print_paths (x : string list list) = 
+let rec _print_paths (x : string list list) = 
   match x with 
     [] -> ()
-    | x :: xs -> Printf.printf "Possible positive path: %s\n" @@ String.concat " " x; print_paths xs 
+    | x :: xs -> Printf.printf "Possible positive path: %s\n" @@ String.concat " " x; _print_paths xs 
 ;;
 
 
@@ -51,18 +51,9 @@ let _testG : Model.operation list = teste :: test2 :: test3 :: test4 :: [];;
 *)
 let graph = Graph.generate_graph methods;;
 
-let err_msg = function
-    | `Parse_error -> `Msg "Incorrect regular expression"
-    | `Not_supported -> `Msg "Unsupported syntax"
+let _y = Dfa.get_input_symbol _states methods;;
 
-let _parser s = 
-  match Parsing.parse s with
-   Ok x -> Ok x 
-   | Error e -> Error (err_msg e)
-;;
 
-let paths = Graph.find_all_paths graph "I";;
-
-print_paths paths;;
+let _paths = Graph.find_all_paths graph "S1";;
 
 Printf.printf "File Test executed.\n";;

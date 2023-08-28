@@ -1,1 +1,1 @@
-lib/graph.ml: Bool List Model Printf Regenerate Segments String ThunkList Word
+lib/graph.ml: Bool Contract List Model Printf Segments String ThunkList
