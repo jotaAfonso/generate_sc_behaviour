@@ -1,0 +1,5 @@
+(test
+ (name test_re)
+ (libraries generate_sc_behaviour generate_sc_behaviour.segments re)
+ (action
+  (run %{test} -v --long)))

@@ -10,7 +10,7 @@ type 'a t
   | Rep of int * int option * 'a t
 
 (** Smart constructors *)
-let equal _ _ = true 
+
 let epsilon = One
 let void = Set (true, [])
 let atom c = Set (true, [c])

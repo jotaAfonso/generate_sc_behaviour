@@ -1,5 +1,5 @@
 (library
  (name lib_generate)
  (public_name generate_sc_behaviour)
- (libraries segments str fmt iter qcheck)
+ (libraries segments str fmt iter qcheck yojson)
  (ocamlopt_flags :standard "-O3" "-inlining-report"))

@@ -1,7 +1,6 @@
 lib: [
   "_build/install/default/lib/generate_sc_behaviour/META"
   "_build/install/default/lib/generate_sc_behaviour/dfa.ml"
-  "_build/install/default/lib/generate_sc_behaviour/dfa.mli"
   "_build/install/default/lib/generate_sc_behaviour/dune-package"
   "_build/install/default/lib/generate_sc_behaviour/extractSC.ml"
   "_build/install/default/lib/generate_sc_behaviour/graph.ml"
@@ -15,7 +14,6 @@ lib: [
   "_build/install/default/lib/generate_sc_behaviour/lib_generate.ml"
   "_build/install/default/lib/generate_sc_behaviour/lib_generate__Dfa.cmi"
   "_build/install/default/lib/generate_sc_behaviour/lib_generate__Dfa.cmt"
-  "_build/install/default/lib/generate_sc_behaviour/lib_generate__Dfa.cmti"
   "_build/install/default/lib/generate_sc_behaviour/lib_generate__Dfa.cmx"
   "_build/install/default/lib/generate_sc_behaviour/lib_generate__ExtractSC.cmi"
   "_build/install/default/lib/generate_sc_behaviour/lib_generate__ExtractSC.cmt"
@@ -49,6 +47,7 @@ lib: [
   "_build/install/default/lib/generate_sc_behaviour/segments/Heap.ml" {"segments/Heap.ml"}
   "_build/install/default/lib/generate_sc_behaviour/segments/LazyList.ml" {"segments/LazyList.ml"}
   "_build/install/default/lib/generate_sc_behaviour/segments/Segments.ml" {"segments/Segments.ml"}
+  "_build/install/default/lib/generate_sc_behaviour/segments/Segments.mli" {"segments/Segments.mli"}
   "_build/install/default/lib/generate_sc_behaviour/segments/Sigs.ml" {"segments/Sigs.ml"}
   "_build/install/default/lib/generate_sc_behaviour/segments/StrictSet.ml" {"segments/StrictSet.ml"}
   "_build/install/default/lib/generate_sc_behaviour/segments/ThunkList.ml" {"segments/ThunkList.ml"}
@@ -59,6 +58,7 @@ lib: [
   "_build/install/default/lib/generate_sc_behaviour/segments/segments.cma" {"segments/segments.cma"}
   "_build/install/default/lib/generate_sc_behaviour/segments/segments.cmi" {"segments/segments.cmi"}
   "_build/install/default/lib/generate_sc_behaviour/segments/segments.cmt" {"segments/segments.cmt"}
+  "_build/install/default/lib/generate_sc_behaviour/segments/segments.cmti" {"segments/segments.cmti"}
   "_build/install/default/lib/generate_sc_behaviour/segments/segments.cmx" {"segments/segments.cmx"}
   "_build/install/default/lib/generate_sc_behaviour/segments/segments.cmxa" {"segments/segments.cmxa"}
   "_build/install/default/lib/generate_sc_behaviour/segments/segments__.cmi" {"segments/segments__.cmi"}

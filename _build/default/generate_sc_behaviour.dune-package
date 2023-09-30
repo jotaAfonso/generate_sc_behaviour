@@ -5,7 +5,6 @@
  (lib
   (META
    dfa.ml
-   dfa.mli
    dune-package
    extractSC.ml
    graph.ml
@@ -19,7 +18,6 @@
    lib_generate.ml
    lib_generate__Dfa.cmi
    lib_generate__Dfa.cmt
-   lib_generate__Dfa.cmti
    lib_generate__Dfa.cmx
    lib_generate__ExtractSC.cmi
    lib_generate__ExtractSC.cmt
@@ -53,6 +51,7 @@
    segments/Heap.ml
    segments/LazyList.ml
    segments/Segments.ml
+   segments/Segments.mli
    segments/Sigs.ml
    segments/StrictSet.ml
    segments/ThunkList.ml
@@ -63,6 +62,7 @@
    segments/segments.cma
    segments/segments.cmi
    segments/segments.cmt
+   segments/segments.cmti
    segments/segments.cmx
    segments/segments.cmxa
    segments/segments__.cmi
@@ -100,7 +100,7 @@
  (archives (byte lib_generate.cma) (native lib_generate.cmxa))
  (plugins (byte lib_generate.cma) (native lib_generate.cmxs))
  (native_archives lib_generate.a)
- (requires generate_sc_behaviour.segments str fmt iter qcheck)
+ (requires generate_sc_behaviour.segments str fmt iter qcheck yojson)
  (main_module_name Lib_generate)
  (modes byte native)
  (modules
@@ -116,7 +116,7 @@
      (module
       (obj_name lib_generate__Dfa)
       (visibility public)
-      (source (path Dfa) (intf (path dfa.mli)) (impl (path dfa.ml))))
+      (source (path Dfa) (impl (path dfa.ml))))
      (module
       (obj_name lib_generate__ExtractSC)
       (visibility public)
@@ -180,7 +180,10 @@
      (module
       (obj_name segments)
       (visibility public)
-      (source (path Segments) (impl (path segments/Segments.ml))))
+      (source
+       (path Segments)
+       (intf (path segments/Segments.mli))
+       (impl (path segments/Segments.ml))))
      (module
       (obj_name segments__Sigs)
       (visibility public)

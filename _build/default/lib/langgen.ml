@@ -237,10 +237,11 @@ module[@inline always] Make
       in
       rep_with_acc acc (dec i) (CCOpt.map dec j) lang
   let rep i j lang = match i,j with
-    | 0, 0 -> langEpsilon
+    | 0, None -> star lang
+    | 0, Some 0 -> langEpsilon
     | i, j ->
       let acc = add_epsilonX i lang in
-      rep_with_acc acc (dec i) (CCOpt.map dec @@ Option.some j) lang
+      rep_with_acc acc (dec i) (CCOpt.map dec j) lang
 
   (** Others *)
 
@@ -253,7 +254,9 @@ module[@inline always] Make
       in
       Segment.empty @: segm1 @: nothing
 
+
   (****)
+
   let rec gen : Word.char Regex.t -> lang = function
     | Set (b, l) -> charset b l
     | One -> langEpsilon
@@ -261,14 +264,8 @@ module[@inline always] Make
     | Or (r1, r2) -> union (gen r1) (gen r2)
     | And (r1, r2) -> inter (gen r1) (gen r2)
     | Not r -> compl (gen r)
-    | Rep (_, _, r) -> rep 1 2 (gen r)
+    | Rep (i, j, r) -> rep i j (gen r)
   
-
-  let gen2 : Word.char Regex.t -> lang = function
-    Seq (r1, r2) -> rep 1 2 (concatenate (gen r1) (gen r2))
-    | _ -> langEpsilon
-  ;;
-
   (** Exporting *)
 
   let rec flatten_from n s k = match s () with
@@ -361,6 +358,44 @@ module[@inline always] Make
 
 end
 
+let provided
+    (type t) (type char)
+    (module W : Word.S with type char = char and type t = t)
+    (module S : Segments.S with type elt = W.t)
+    ?(skip=2)
+    ~pp
+    ~samples
+    (alphabet : W.char list) (expression : char Regex.t) =
+  let sigma = S.of_list @@ List.map W.singleton alphabet in
+  let module Sigma = struct type t = S.t let sigma = sigma end in
+  let module L = Make (W) (S) (Sigma) in
+  let gen st =
+    let re = expression in
+    Fmt.epr "Regex: %a@." (Regex.pp pp) re;
+    let print_samples s l =
+      Fmt.epr "@[<2>%s:@ %a@]@." s Fmt.(list ~sep:(Fmt.any ",@ ") W.pp) l
+    in
+    let lang = L.gen re in
+    let f s l =
+      l
+      |> L.sample ~st ~skip ~n:samples
+      |> CCFun.(%) ignore
+      |> Iter.to_list
+      |> CCFun.tap (print_samples s)
+    in
+    let pos_examples = f "Pos" lang in
+    let neg_examples = f "Neg" @@ L.compl lang in
+    (re, pos_examples, neg_examples)
+  in
+  let pp fmt (x, l , l') =
+    Fmt.pf fmt "@[<2>Regex:@ %a@]@.@[<v2>Pos:@ %a@]@.@[<v2>Neg:@ %a@]"
+      (Regex.pp pp) x   Fmt.(list W.pp) l   Fmt.(list W.pp) l'
+  in
+  let print = Fmt.to_to_string pp in
+  let small (x, _, _) = Regex.size x in
+  let shrink = QCheck.Shrink.(triple nil list list) in
+  QCheck.make ~print ~small ~shrink gen
+
 let arbitrary
     (type t) (type char)
     (module W : Word.S with type char = char and type t = t)
@@ -378,7 +413,7 @@ let arbitrary
     let re = Regex.gen ~compl (oneofl alphabet) st in
     Fmt.epr "Regex: %a@." (Regex.pp pp) re;
     let print_samples s l =
-      Fmt.epr "@[<2>%s:@ %a@]@." s Fmt.(list ~sep:(any ",@ ") W.pp) l
+      Fmt.epr "@[<2>%s:@ %a@]@." s Fmt.(list ~sep:(Fmt.any ",@ ") W.pp) l
     in
     let lang = L.gen re in
     let f s l =

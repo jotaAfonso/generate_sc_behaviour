@@ -1,5 +1,5 @@
 description = ""
-requires = "fmt generate_sc_behaviour.segments iter qcheck str"
+requires = "fmt generate_sc_behaviour.segments iter qcheck str yojson"
 archive(byte) = "lib_generate.cma"
 archive(native) = "lib_generate.cmxa"
 plugin(byte) = "lib_generate.cma"

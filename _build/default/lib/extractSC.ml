@@ -1,4 +1,5 @@
 open Model
+open Model.Contract
 
 let contains s1 s2 =
   let re = Str.regexp_string s2
@@ -16,18 +17,18 @@ let read_file filename =
     done; !lines
   with End_of_file ->
     close_in chan;
-    List.rev !lines;;
+    List.rev !lines
+;;
 
 let rec extractStates (lines : string list) flag : string list =
   match (lines , flag) with
     [] , _ -> []
-    | x :: xs, false -> if contains x "StateType" 
+    | x :: xs, false -> if Bool.(&&) (contains x "data") (contains x "StateType") 
       then [String.trim x] @ extractStates xs true else [] @ extractStates xs false
     | x :: xs, true -> if contains x "deriving" 
       then [] else [String.trim x] @ extractStates xs true
 ;;
 
-(*SAME AS PREVIOUS, GENERALIZE IT*)
 let rec extractDeploy (lines : string list) flag : string list =
   match (lines , flag) with
     [] , _ -> []
@@ -55,6 +56,20 @@ let rec getParams lines : Contract.parameter list =
       else getParams xs
 ;;
  
+let rec extractParametersOfMethods lines =
+  match lines with 
+    [] -> []
+    | x :: xs -> if contains x ":"  
+      then let split_param = (x |> String.split_on_char ':') in 
+        let result : Contract.parameter = { labelOfParam = (String.trim @@ List.nth split_param 0); typeLabel = String.trim @@ List.nth split_param 1 } in
+        if contains x "controller" 
+          then [ result ]
+          else [ result ] @ extractParametersOfMethods xs
+        else if contains x "controller" 
+          then []
+          else extractParametersOfMethods xs
+
+
 let treatStates lines =
   (*Extracts states*)
   let eStates = extractStates lines false in
@@ -72,7 +87,7 @@ let treatDeploy lines : Contract.template =
   let eDeploy = (extractDeploy lines false) |> List.filter (fun s -> s <> "") in 
   let lTLabel = getTemplateLabel eDeploy in 
   let lParams = getParams eDeploy in 
-  { templateLabel = lTLabel; parameters = lParams; initialState = "" }
+  { templateLabel = lTLabel; parametersInput = lParams; initialState = "" }
 ;;
 
 let extractMethodLabel line =
@@ -89,6 +104,17 @@ let rec extractResultState lines =
       else extractResultState xs
 ;;
 
+let rec extractPostConditionsMethod lines =
+  match lines with
+    [] -> []
+    | x :: xs -> 
+      if (contains x "=")
+      then [String.trim x] @ extractPostConditionsMethod xs
+      else if (contains x "choice")
+        then []
+      else [] @ extractPostConditionsMethod xs
+;;
+
 let extractRequiredState line : string =
   let splitLine = line |> String.split_on_char '=' in 
   let first = List.nth splitLine 0 in 
@@ -100,17 +126,30 @@ let extractRequiredState line : string =
         | _ -> String.trim (Str.(global_replace (regexp ")") "" (List.nth sR 1)))
     else (* when state value is on the left side *)
       ""
-;;
+;; 
+
+let extractPreConditionsMethod line preC =
+  if (contains line "assertMsg") 
+    then let splitChoice = (Str.split (Str.regexp "\"") line) in 
+      [String.trim (List.nth splitChoice 2)] @ preC   
+    else let splitChoice = (Str.split (Str.regexp "assert") line) in
+      [String.trim (List.nth splitChoice 1)] @ preC  
 
 let rec extractMethods (lines : string list) flag (operation : Contract.operation) (deploy : Contract.template) : Contract.operation list=
   match (lines , flag) with
     [] , _ -> []
     | x :: xs, false -> if contains x "choice" 
-      then extractMethods xs true { operation with operationlabel = extractMethodLabel x} deploy 
+      then extractMethods xs true { operation with operationlabel = extractMethodLabel x; parameters = extractParametersOfMethods xs} deploy 
       else extractMethods xs false operation deploy
-    | x :: xs, true -> if Bool.(&&) (contains x "assert") (contains x "state") 
-      then extractMethods xs true { operation with requiredState = extractRequiredState x} deploy 
-      else if Bool.(&&) (contains x "create") (Bool.(||) (contains x deploy.templateLabel) (contains x "this")) 
-      then [{ operation with resultState = extractResultState xs}] @ extractMethods xs false { operationlabel = ""; resultState = ""; requiredState = ""} deploy 
-      else extractMethods xs true operation deploy
+    | x :: xs, true -> if (contains x "assert") 
+      then 
+        if (contains x "state") 
+          then extractMethods xs true { operation with requiredState = extractRequiredState x} deploy 
+          else if (contains x "assert") 
+            then extractMethods xs true { operation with preconditions = extractPreConditionsMethod x operation.preconditions} deploy 
+            else extractMethods xs true operation deploy 
+      else 
+        if Bool.(&&) (contains x "create") (Bool.(||) (contains x deploy.templateLabel) (contains x "this")) 
+          then [{ operation with resultState = extractResultState xs; postconditions = List.filter (fun x -> Bool.not @@ contains x "state") (extractPostConditionsMethod xs)}] @ extractMethods xs false { operationlabel = ""; resultState = ""; requiredState = ""; parameters = []; preconditions = []; postconditions = []} deploy 
+          else extractMethods xs true operation deploy
 ;;

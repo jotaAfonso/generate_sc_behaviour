@@ -1,3 +1,5 @@
+module simple where
+
 data StateType 		
   = Q0  
   | Q1
@@ -6,8 +8,8 @@ data StateType
 
 template Market
   with 
-    owner       : Party
-    buyer       : Party
+    owner       : Int
+    buyer       : Int
     state       : StateType
 
   where
@@ -15,23 +17,27 @@ template Market
     ensure owner /= buyer  
     observer buyer
 
-    choice O : ItemId
+    choice makeOffer : ItemId 
+     
       controller owner
         do
           assertMsg "Item is not available for an offer." this.state == Q0
+          assertMsg "mensagem" 1 + 3 = balance
 
           create Market with
             state  = Q2
+            owner = buyer
 
-    choice 1 : ItemId
+    choice accept : ItemId
       controller owner
         do
           assertMsg "Item is not available for an offer." this.state == Q0
+          assert 5 != buyer
 
           create Market with
             state  = Q1
 
-    choice O : ItemId
+    choice reject : ItemId
       controller owner
         do
           assertMsg "Item is not available for an offer." this.state == Q1
@@ -39,7 +45,7 @@ template Market
           create Market with
             state  = Q1
 
-      choice 1 : ItemId
+    choice thinks : ItemId
       controller owner
         do
           assertMsg "Item is not available for an offer." this.state == Q1
@@ -47,7 +53,7 @@ template Market
           create Market with
             state  = Q1
 
-      choice O : ItemId
+    choice anotherOne : ItemId
       controller owner
         do
           assertMsg "Item is not available for an offer." this.state == Q2
