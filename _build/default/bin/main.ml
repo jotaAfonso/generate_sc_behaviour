@@ -9,12 +9,9 @@ open Z3.Arithmetic
 open Z3.Arithmetic.Real
 open Z3.Goal
 open Z3.Solver
+open Automata.Types_j
 
-let rec _print_op (ls : operation list) =
-  match ls with
-    [] -> ()
-    | x :: xs -> Printf.printf "label - %s\n" x.operationlabel; List.iter (fun y -> Printf.printf "PostCon - %s\n" y) x.postconditions; _print_op xs
-;;
+let counter = ref 0;;
 
 let rec changeRegexWords (regex:string) (alphabet: string list) =
   match alphabet with 
@@ -33,14 +30,17 @@ let rec changeRegexSymbols (regex:string) (alphabet: string list) =
 let _regex automaton= 
   let r = get_regex automaton in
   let alphabet_regex = changeRegexWords r automaton.alphabet in
+  
   let symbols_list = ["?";"+";"*"] in
-  changeRegexSymbols alphabet_regex symbols_list
+  let result = changeRegexSymbols alphabet_regex symbols_list in
+  
+  result
   ;;
 
 let gen_re regex_string = 
   let sigma = (CCString.of_list @@ CCOpt.get_exn @@ Regex.enumerate ' ' '~') ^ "$" in
   let regex = Result.get_ok (parse regex_string) in
-  let result = Gen_re._print_allv2 sigma regex (Some 3) None in 
+  let result = Regen._print_allv2 sigma regex (Some 3) None in 
   let (pos, _) = result in 
   Iter.to_list pos
 ;;
@@ -48,7 +48,7 @@ let gen_re regex_string =
 let rec createConst ctx (params : parameter list) =
   match params with 
      [] -> []
-    | p :: xs -> [mk_const_s ctx p.labelOfParam] @ createConst ctx xs
+    | p :: xs -> [p.labelOfParam, mk_const_s ctx p.labelOfParam] @ createConst ctx xs
 
 let path_analise_word path w =
   if (Str.string_partial_match (Str.regexp path) w 0) 
@@ -139,22 +139,52 @@ let rec addExpressionsOfEachMethod ctx path (regexData : regexwithassertions) =
   match path with
     [] -> []
     | x :: xs -> 
-      Printf.printf "%s \n" x;
       let operation = List.hd @@ List.filter (fun y -> String.equal x y.operationlabel) regexData.operations in
       let _exp_pre_cond = createAssertion ctx operation.preconditions in
       let _exp_post_cond = createAssertion ctx operation.postconditions in
       let result = _exp_pre_cond @ _exp_post_cond in
-      
-      Printf.printf "Expressoes \n";
-      List.iter (fun x -> Printf.printf "%s\n" @@ Expr.to_string x) result;
       result @ addExpressionsOfEachMethod ctx xs regexData
 
-let solve_path (path : string) (alphabet : string list) result : unit =
-  Printf.printf "\n";
-  Printf.printf "\n";
-  (*Printf.printf "Path - %s\n" path;*)
+let rec createDeployPartyScript oc paramList =
+  match paramList with
+    [] -> ()
+    | x :: xs -> if (String.equal "Party" x.typeLabel) then
+       Printf.fprintf oc "%s = alice\n" x.labelOfParam; createDeployPartyScript oc xs
+
+let rec createDeployStateScript oc paramList initS =
+match paramList with
+  [] -> ()
+  | x :: xs -> if (String.equal "state" x.labelOfParam) then
+      Printf.fprintf oc "state = %s\n" initS; createDeployStateScript oc xs initS
+
+let rec createDeployRestScript oc paramList model (_input_var : (string * expr) list) =
+  match paramList with
+    [] -> ()
+    | x :: xs -> if ((&&) (not (String.equal "Party" x.typeLabel)) (not (String.equal "state" x.labelOfParam)) ) then
+      let varz3 = snd @@ List.hd @@ List.filter (fun (a, _) ->  String.equal a x.labelOfParam) _input_var in 
+      let x_value = Model.get_const_interp_e model varz3 in
+      Printf.fprintf oc "      %s = " x.labelOfParam;
+      Printf.fprintf oc "      %s\n" (Integer.numeral_to_string (Option.get x_value));
+      createDeployRestScript oc xs model _input_var
+;;
+
+let rec createMethodsScript oc _path_list (operations : operation list) =
+  match _path_list with 
+    [] -> ()
+    | x :: xs -> let local_operation = List.hd @@ List.filter (fun y -> String.equal x y.operationlabel) operations in
+      if not @@ Int.equal 1 (List.length xs) then
+        if Int.equal 1 (List.length xs) then 
+          Printf.fprintf oc "  submit alice do\n"
+        else 
+          Printf.fprintf oc "  local <- submit alice do\n";
+        Printf.fprintf oc "    exerciseCmd local %s\n" local_operation.operationlabel; createMethodsScript oc xs operations
+;;
+
+let solve_path (path : string) templateLabel (alphabet : string list) result initS : unit =
   let cleaned_path = Str.(global_replace (regexp "ε") "" path) in 
   let _path_list = path_to_list cleaned_path alphabet alphabet in
+  Printf.printf "Current Path:\n";
+  List.iter (Printf.printf "%s ") _path_list;
   let ctx = mk_context [] in
   let _input_var = createConst ctx result.contract_input in 
   
@@ -167,22 +197,55 @@ let solve_path (path : string) (alphabet : string list) result : unit =
     if (check solver []) != SATISFIABLE then
       Printf.printf "TestFailedException\n"
     else
-      Printf.printf "";
+      Printf.printf "Assertions are satisfiable.\n";
+      
+      let model = get_model solver in
+      match model with
+        None -> Printf.printf "No Model Solution\n";
+        | Some m -> 
+      
+      let fileName = "Main" ^ (string_of_int !counter) in
+      let oc = open_out (fileName ^ ".daml") in
+      counter := !counter + 1;
+      Printf.fprintf oc ("module %s where\n") fileName;
+      Printf.fprintf oc "import Daml.Script\nimport Hello\n";
+      Printf.fprintf oc "setup = script do \n";
+      Printf.fprintf oc "  alice <- allocateParty\"Alice\"\n";
+
+
+      Printf.fprintf oc "  local <- submit alice do \n";
+      Printf.fprintf oc "    createCmd %s  with\n" templateLabel;
+      createDeployPartyScript oc result.contract_input;
+      createDeployStateScript oc result.contract_input initS;
+      createDeployRestScript oc result.contract_input m _input_var;
+
+      createMethodsScript oc _path_list result.operations ;
+      close_out oc;
   );
 ;;
 
+
+
 let setup =
-  let lines = read_file "/home/camel/Desktop/generate_sc_behaviour/test.txt" in
+  let _global_t = Atdgen_runtime.Util.Json.from_file read_global "/home/camel/Desktop/generate_sc_behaviour/auto.json" in
+  
+  let lines = read_file "/home/camel/Desktop/generate_sc_behaviour/Hello.daml" in
   let _states = treatStates lines in
   let deploy = treatDeploy lines in
   let transitions = extractMethods lines false { operationlabel = ""; resultState = ""; requiredState = ""; parameters = []; preconditions = []; postconditions = []} deploy in
   let converted_methods = List.map (fun t -> (t.requiredState, t.operationlabel, t.resultState)) transitions in
   let alphabet = List.map (fun t -> t.operationlabel) transitions in
-  let _automaton = {alphabet = alphabet; allStates = _states; initialState = "Q0"; transitions = converted_methods; acceptStates = ["Q1"]} in
-  let result = { regex = _regex _automaton; possible_positive_cases = gen_re @@ _regex _automaton; contract_input = deploy.parametersInput; operations = transitions} in  
-  List.iter (fun x -> solve_path x alphabet result) result.possible_positive_cases;
+
+  let _automaton = {alphabet = alphabet; allStates = _states; initialState = "S0"; transitions = converted_methods; acceptStates = ["S1"]} in
+  let regular_expression = _regex _automaton in
+  Printf.printf "Regular Expression\n %s\n" regular_expression;
+  let result = { regex = regular_expression; possible_positive_cases = gen_re @@ _regex _automaton; contract_input = deploy.parametersInput; operations = transitions} in  
+ 
+  List.iter (fun x -> solve_path x deploy.templateLabel alphabet result "S0") result.possible_positive_cases;
+
+
 ;;
-  
+
 setup;;
 
 Printf.printf "File Test executed.\n";;

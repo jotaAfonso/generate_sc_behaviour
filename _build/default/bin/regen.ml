@@ -114,47 +114,12 @@ let backend =
   in
   Arg.(value & opt c ThunkList & doc)
 
-
-let re_arg =
-  let err_msg = function
-    | `Parse_error -> `Msg "Incorrect regular expression"
-    | `Not_supported -> `Msg "Unsupported syntax"
-  in
-  let printer fmt _ = Fmt.pf fmt "<re>" in
-  let parser s = match parse s with Ok x -> Ok x | Error e -> Error (err_msg e) in
-  let reconv = Arg.conv ~docv:"REGEX" (parser, printer) in
-  let doc =
-    Arg.info ~docv:"REGEX" ~doc:"Regular expression following Posix's Extended Regular Expression syntax."
-      []
-  in
-  Arg.(required & pos 0 (some reconv) None & doc)
-
-let bound =
-  let doc = Arg.info ~docv:"BOUND" ~doc:"Limit the number of samples."
-      ["b";"bound"]
-  in
-  Arg.(value & opt (some int) None & doc)
-
-let shutter =
-  let doc = Arg.info ~docv:"SKIP"
-      ~doc:"Interval for stuttering."
-      ["s";"shutter"]
-  in
-  Arg.(value & opt int 20 & doc)
-
 let skip =
   let doc = Arg.info ~docv:"SAMPLE"
       ~doc:"Average sampling interval."
       ["s";"sample"]
   in
   Arg.(value & opt (some int) None & doc)
-
-
-let time_limit = 
-  let doc = Arg.info ~docv:"LIMIT" ~doc:"Time limit for stuttering in seconds."
-      ["l";"limit"]
-  in
-  Arg.(value & opt int64 5L & doc)
 
 let sigma =
   let doc = Arg.info ~docv:"ALPHABET" ~doc:"Alphabet used by the regular expression"
@@ -163,22 +128,9 @@ let sigma =
   let default = CCString.of_list @@ CCOpt.get_exn @@ Regex.enumerate ' ' '~' in
   Arg.(value & opt string default & doc)
 
-let setup ~impl ~sigma re = 
-  Fmt_tty.setup_std_outputs ();
-  get_impl ~impl ~sigma re
-
 let setupv2 ~sigma re = 
   Fmt_tty.setup_std_outputs ();
   get_implv2 ~sigma re
-
-let print_all impl sigma re length skip =
-  let conf = match length, skip with
-    | Some n, None -> Take n
-    | None, None -> All
-    | _, Some skip -> Sample { skip ; length }
-  in 
-  setup ~impl ~sigma conf re
-  |> Fmt.pr "%a@." (CCFormat.seq ~sep:(Fmt.any "@.") W.pp)
 
 let _print_allv2 sigma re length (skip:int option) =
   let conf = match length, skip with
@@ -187,72 +139,3 @@ let _print_allv2 sigma re length (skip:int option) =
     | _, Some skip -> Sample { skip ; length }
   in 
   setupv2 ~sigma conf re    
-  
-let count impl sigma re n =
-  let n = CCOpt.get_or ~default:1000 n in
-  let c = Mtime_clock.counter () in
-  let i =
-    setup ~impl ~sigma (Take n) re
-    |> Iter.length
-  in
-  Fmt.pr "Max count: %i@.Actual Count: %i@.Time: %a@." n i
-    Mtime.Span.pp (Mtime_clock.count c)
-
-let measure_until ~limit ~interval oc lang =
-  let c = Mtime_clock.counter () in
-  let r = ref 0 in
-  let fmt = Format.formatter_of_out_channel oc in
-  let output i s = Fmt.pf fmt "%i\t%f@." i (Mtime.Span.to_s s) in
-  let f _ =
-    incr r ;
-    let i = !r in
-    if i mod interval = 0 then begin
-      let t = Mtime_clock.count c in
-      output i t ;
-      if Mtime.Span.compare limit t < 0
-      then raise Exit
-      else ()
-    end
-  in
-  (try Iter.iter f lang with Exit -> ());
-  close_out oc ;
-  ()
-
-let running_profile impl re sigma stutter limit =
-  let oc = stdout in
-  setup ~impl ~sigma All re
-  |> measure_until
-      ~limit:(Mtime.Span.of_uint64_ns (Int64.mul limit 1_000_000_000L))
-      ~interval:stutter
-      oc
-
-let gen_cmd =
-  let info =
-    Cmd.info "generate"
-      ~doc:"Generate all strings matching a given regular expression."
-  in
-  let t = Term.(const print_all $ backend $ sigma $ re_arg $ bound $ skip) in
-  (t, info)
-  
-let count_cmd =
-  let info =
-    Cmd.info "count"
-      ~doc:"Time language generation up to a certain number of strings."
-  in
-  let t = Term.(const count $ backend $ sigma $ re_arg $ bound) in
-  (t, info)
-
-let profile_cmd = 
-  let info =
-    Cmd.info "profile"
-      ~doc:"Profile language generation for the given regular expression."
-  in
-  let t = Term.(const running_profile $ backend $ re_arg $ sigma $ shutter $ time_limit) in
-  (t, info)
-
-let _cmds = [ profile_cmd ; count_cmd ; gen_cmd ]
-let _default_cmd = 
-  let doc = "Language generation for regular expressions." in
-  let info = Cmd.info "regenerate" ~doc in
-  let t = Term.(ret (const @@ `Help (`Pager, None))) in
-  (t, info)    

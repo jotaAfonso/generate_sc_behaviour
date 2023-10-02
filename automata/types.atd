@@ -1,0 +1,44 @@
+type association = {
+	role 		<json name="role"> 			: string;
+	parts 		<json name="participants"> 		: string list;
+}
+
+type transition_global = {
+	fromS 		<json name="from"> 			: string;
+	toS 		<json name="to"> 			: string;
+	action 		<json name="actionLabel">		: string;
+	new_p		<json name="newParts"> 			: association list;
+	exi_p		<json name="existantParts"> 		: association;
+	input 		<json name="input"> 			: string;
+	preC 		<json name="preCondition"> 		: string;
+	postC 		<json name="postCondition"> 		: string;
+	internal	<json name="internal"> 			: bool;
+	extCall		<json name="externalCall"> 		: bool;
+}
+
+type global = { 
+	id 		<json name="id">			: string; 
+	initialS 	<json name="initialState">		: string;
+	states 		<json name="states"> 			: string list;
+	endS	 	<json name="finalStates"> 		: string list;
+	transitions	<json name="transitions">		: transition_global list;
+	roles 		<json name="roles"> 			: string list;
+	role_part	<json name="rPAssociation"> 		: association list;
+	}
+
+type transition_proj = {
+	fromS 		<json name="from"> 			: string;
+	toS 		<json name="to"> 			: string;
+	action 		<json name="actionLabel">		: string;
+
+}
+
+type proj = {
+	id 			<json name="id">				: string; 
+	role		<json name="role">				: string;
+	parts 		<json name="participants"> 		: string list; 
+	initialS 	<json name="initialState">		: string;
+	states 		<json name="states"> 			: string list;
+	endS	 	<json name="finalStates"> 		: string list;
+	transitions	<json name="transitions">		: transition_proj list;
+}

@@ -1,4 +1,12 @@
 (executable
  (public_name generate_sc_behaviour)
  (name main)
- (libraries z3 mtime.clock.os fmt.tty cmdliner lib_generate segments))
+ (libraries
+  z3
+  mtime.clock.os
+  fmt.tty
+  cmdliner
+  lib_generate
+  segments
+  automata
+  core))

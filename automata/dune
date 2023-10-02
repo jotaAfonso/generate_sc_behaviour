@@ -1,0 +1,3 @@
+(library
+ (name automata)
+ (libraries yojson atdgen))
