@@ -135,10 +135,6 @@ let extractPreConditionsMethod line preC =
     else let splitChoice = (Str.split (Str.regexp "assert") line) in
       [String.trim (Str.(global_replace (regexp ")") "" (Str.(global_replace (regexp "(") "" (List.nth splitChoice 1)))))] @ preC  
 
-
-
-
-
 let rec extractMethods (lines : string list) flag (operation : Contract.operation) (deploy : Contract.template) : Contract.operation list=
   match (lines , flag) with
     [] , _ -> []

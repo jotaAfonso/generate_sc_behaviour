@@ -1,9 +1,9 @@
-# dune build
+# dune exec bin/main.exe
 # OCAMLPARAM: unset
 # Shared cache: disabled
-# Workspace root: /home/camel/Desktop/generate_sc_behaviour
-# Auto-detected concurrency: 2
-$ /home/camel/.opam/cs3110-2022fa/bin/ocamlc.opt -config > /tmp/dune_657af7_output
+# Workspace root: /home/camel/Desktop/git/generate_sc_behaviour
+# Auto-detected concurrency: 4
+$ /home/camel/.opam/cs3110-2022fa/bin/ocamlc.opt -config > /tmp/dune_712aab_output
 # Dune context:
 #  { name = "default"
 #  ; kind = "default"
@@ -23,15 +23,15 @@ $ /home/camel/.opam/cs3110-2022fa/bin/ocamlc.opt -config > /tmp/dune_657af7_outp
 #      map
 #        { "DUNE_OCAML_HARDCODED" : "/home/camel/.opam/cs3110-2022fa/lib"
 #        ; "DUNE_OCAML_STDLIB" : "/home/camel/.opam/cs3110-2022fa/lib/ocaml"
-#        ; "DUNE_SOURCEROOT" : "/home/camel/Desktop/generate_sc_behaviour"
+#        ; "DUNE_SOURCEROOT" : "/home/camel/Desktop/git/generate_sc_behaviour"
 #        ; "INSIDE_DUNE" :
-#            "/home/camel/Desktop/generate_sc_behaviour/_build/default"
+#            "/home/camel/Desktop/git/generate_sc_behaviour/_build/default"
 #        ; "OCAMLFIND_IGNORE_DUPS_IN" :
-#            "/home/camel/Desktop/generate_sc_behaviour/_build/install/default/lib"
+#            "/home/camel/Desktop/git/generate_sc_behaviour/_build/install/default/lib"
 #        ; "OCAMLPATH" :
-#            "/home/camel/Desktop/generate_sc_behaviour/_build/install/default/lib"
+#            "/home/camel/Desktop/git/generate_sc_behaviour/_build/install/default/lib"
 #        ; "OCAMLTOP_INCLUDE_PATH" :
-#            "/home/camel/Desktop/generate_sc_behaviour/_build/install/default/lib/toplevel"
+#            "/home/camel/Desktop/git/generate_sc_behaviour/_build/install/default/lib/toplevel"
 #        ; "OCAML_COLOR" : "always"
 #        ; "OPAMCOLOR" : "always"
 #        }

@@ -1,4 +1,4 @@
-(lang dune 3.10)
+(lang dune 3.9)
 (name generate_sc_behaviour)
 (sections (lib .) (libexec .) (bin ../../bin))
 (files

@@ -149,3 +149,187 @@ let get_regex (automaton : automaton) =
   let input_symbol = get_input_symbol auto in 
   dfa_to_regex auto input_symbol auto.initial_state (List.hd auto.end_states)
   *)
+
+(* Since the algorithm only works for deterministic automaton, we first convert it
+					to its deterministic equivalent *)
+
+open Model.FiniteAutomaton
+
+
+
+module RegExpSyntax = struct
+    (*  Grammar:
+        E -> E + E | E E | E* | c | (E) | ()
+
+      Grammar with priorities:
+        E -> T | T + E
+        T -> F | F T
+        F -> A | A*
+        A -> P | c
+        P -> (E) | ()
+    *)
+  type t =
+    | Plus of t * t
+    | Seq of t * t
+    | Star of t
+    | Symb of string
+    | Empty
+    | Zero
+  ;;
+
+let rec toStringN n re =
+  match re with
+    | Plus(l, r) ->
+        (if n > 0 then "(" else "") ^
+        toStringN 0 l ^ "+" ^ toStringN 0 r
+        ^ (if n > 0 then ")" else "")
+    | Seq(l, r) ->
+        (if n > 1 then "(" else "") ^
+        toStringN 1 l ^ toStringN 1 r
+        ^ (if n > 1 then ")" else "")
+    | Star(r) ->
+        toStringN 2 r ^ "*"
+    | Symb(c) -> c
+    | Empty -> "~"
+    | Zero -> "!"
+
+let toString re =
+  toStringN 0 re
+end  
+
+let transitionGet1 trns = List.sort_uniq compare (List.map ( fun (a,_,_) -> a ) trns)
+let transitionGet2 trns = List.sort_uniq compare (List.map ( fun (_,b,_) -> b ) trns)
+let transitionGet3 trns = List.sort_uniq compare (List.map ( fun (_,_,c) -> c ) trns)
+let transitionGet23 trns = List.sort_uniq compare (List.map (fun(_,b,c) -> (b,c)) trns) 
+        
+
+let nextStates st sy t =			
+  let n = List.filter (fun (a,b,_c) -> st = a && sy = b) t in
+    transitionGet3 n     
+
+let nextEpsilon1 st ts =
+  let trns = List.filter (fun (a,b,_c) -> st = a && b = "~") ts in
+  let nextStates = transitionGet3 trns in	
+List.sort_uniq compare (st :: nextStates) 
+
+
+let rec closeEmpty sts t = 
+  let ns = List.sort_uniq compare (List.flatten (List.map (fun st -> nextEpsilon1 st t) sts)) in
+    if (List.for_all (fun x -> List.mem x ns) sts) then ns else closeEmpty (List.sort_uniq compare (sts @ ns)) t 
+  
+let fuseStates sts = String.concat "_" sts 
+
+let toDeterministic  (auto : automaton) =
+  let move sts sy ts = List.sort_uniq compare (List.flatten (List.map (fun st -> nextStates st sy ts ) sts)) in	
+				
+  (* generates the set of states reachable from the given state set though the given symbol *)
+  let newR oneR sy ts = 
+    let nxtSts = move oneR sy ts in
+    let clsempty = closeEmpty nxtSts ts in
+    List.sort_uniq compare (nxtSts @ clsempty) in
+    
+  (* creates all transitions (given state set, a given symbol, states reachable from set through given symbol) *)
+  let rToTs r = 
+    let nxtTrans = List.sort_uniq compare ( List.map (fun sy -> (r, sy, newR r sy auto.transitions)) auto.alphabet) in
+      List.filter (fun (_,_,z) -> not (z = [])) nxtTrans in
+    
+  (* applies previous function to all state sets until no new set is generated *)
+  let rec rsToTs stsD rD trnsD alph = 
+    let nxtTs = List.sort_uniq compare (List.flatten (List.map (fun stSet -> rToTs stSet ) rD)) in
+    let nxtRs = List.sort_uniq compare ( List.map (fun (_,_,z) -> z) nxtTs) in
+    let newRs = List.filter (fun r -> not (List.mem r stsD)) nxtRs in
+    if newRs = [] then (List.sort_uniq compare (trnsD @ nxtTs)) else 
+      rsToTs (List.sort_uniq compare (newRs @ stsD)) newRs (List.sort_uniq compare (trnsD @ nxtTs)) alph  in	
+  
+  
+  let r1 = closeEmpty (List.sort_uniq compare [auto.initialState]) auto.transitions in
+  
+  (* all transitions of the new deterministic automaton *)				
+  let trnsD = rsToTs (List.sort_uniq compare [r1]) (List.sort_uniq compare [r1]) [] auto.alphabet in
+          
+  let tds = List.sort_uniq compare ( List.map (fun (a,b,c) -> (fuseStates ( a), b, fuseStates ( c))) trnsD) in
+      
+  let newInitialState = fuseStates (r1) in
+  
+  let stSet1 = List.sort_uniq compare ( List.map (fun (a,_,_) -> a) trnsD) in
+  let stSet2 = List.sort_uniq compare ( List.map (fun (_,_,c) -> c) trnsD) in
+  let stSet = List.sort_uniq compare (stSet1 @ stSet2) in
+  
+  let isAccepState st = List.mem st auto.acceptStates in
+  let hasAnAccepSt set = List.exists (fun st -> isAccepState st ) set in
+  let newAccStsSet = List.filter (fun set -> hasAnAccepSt set) stSet in
+  
+  let newAllSts = List.sort_uniq compare ( List.map (fun set -> fuseStates ( set)) stSet) in
+  let newAccSts = List.sort_uniq compare ( List.map (fun set -> fuseStates ( set)) newAccStsSet) in
+  
+  { alphabet = auto.alphabet; allStates = newAllSts; initialState = newInitialState; transitions = tds; acceptStates = newAccSts }
+
+          
+let regularExpression auto = 
+  let det = toDeterministic auto in
+    
+  let sts = det.allStates in
+  let trns = det.transitions in
+  
+  (* transforms the set of expressions into the regex: plus of all expressions of the set *)			
+  let plusSet reSet =
+    let rec pls l =
+      match l with
+        [] -> RegExpSyntax.Zero
+        | x::xs -> if xs = [] then x else RegExpSyntax.Plus (x, pls xs)
+    in
+      pls ( reSet)
+  in
+  
+  (* For the given i and j, returns the value of R when k is zero.
+    Note that k will always be 0 when called inside this method *)
+  let calczerok k i j = 
+    let ts = List.filter (fun (a,_,b) -> i = a && j = b) trns in
+    if ts <> [] then
+      if i <> j then 
+        let res = List.sort_uniq compare ( List.map (fun (_,c,_) -> RegExpSyntax.Symb c) ts) in 
+          (k,i,j,plusSet res)								
+      else 
+        let res = List.sort_uniq compare ( List.map (fun (_,c,_) -> RegExpSyntax.Symb c) ts) in 
+        let re = RegExpSyntax.Plus(RegExpSyntax.Empty, (plusSet res)) in
+          (k,i,j,re)
+          
+    else (k,i,j,RegExpSyntax.Zero)
+  in
+  
+  
+  (* For the given i and j, returns the value of R when k is not zero. *)
+  let calck k i j prvK = 
+    let getRij i j = 
+      let r = List.nth (List.filter (fun (_,x,y,_) -> x = i && y = j) prvK) 0 in
+        (fun (_,_,_,re) -> re) r
+    in
+    let assembleRe st i j =
+      let rik = getRij i st in
+      let rkk = RegExpSyntax.Star (getRij st st) in
+      let rkj = getRij st j in						
+        RegExpSyntax.Seq(rik, RegExpSyntax.Seq(rkk,rkj)) 
+    in
+    
+    let rij = getRij i j in
+    let rikjs = List.sort_uniq compare ( List.map (fun st -> assembleRe st i j) sts) in
+    let rikj = plusSet rikjs in
+      (k,i,j,RegExpSyntax.Plus(rij,rikj)) 
+      
+  in					
+    
+  (* Main function that applies previous 2 functions to all possible i and j pairs *)	
+  let rec rkij k = 
+    if k < 1 then
+      List.sort_uniq compare ( List.map (fun (i,j) -> calczerok k i j) (List.sort_uniq compare (List.flatten (List.map (fun x -> List.map (fun y -> (x,y)) sts) sts))))
+    else 
+      let prvK = rkij (k-1) in
+        List.sort_uniq compare ( List.map (fun(i,j) -> calck k i j prvK) (List.sort_uniq compare (List.flatten (List.map (fun x -> List.map (fun y -> (x,y)) sts) sts))))
+  in
+  
+  let allRks = rkij (List.length sts) in 
+  let result = List.filter (fun (_,i,j,_) -> i = det.initialState && List.mem j det.acceptStates ) allRks in
+  let res = List.sort_uniq compare ( List.map (fun (_,_,_,re) -> re) result) in
+  let newRe = plusSet res in
+  
+    RegExpSyntax.toString newRe
