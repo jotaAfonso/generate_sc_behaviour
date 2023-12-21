@@ -3,15 +3,18 @@ open Lib_generate.Model.Contract
 open Lib_generate.Parsing
 open Lib_generate.ExtractSC
 open Lib_generate
+(*
 open Z3
 open Z3.Expr
 open Z3.Arithmetic
 open Z3.Arithmetic.Real
 open Z3.Goal
 open Z3.Solver
+*)
 open Automata.Types_j
+open Str
 
-let counter = ref 0;;
+let _counter = ref 0;;
 
 let rec changeRegexWords (regex:string) (alphabet: string list) =
   match alphabet with 
@@ -40,15 +43,12 @@ let _regex automaton=
 let gen_re regex_string = 
   let sigma = (CCString.of_list @@ CCOpt.get_exn @@ Regex.enumerate ' ' '~') ^ "$" in
   let regex = Result.get_ok (parse regex_string) in
-  let result = Regen._print_allv2 sigma regex (Some 3) None in 
+  let result = Regen._print_allv2 sigma regex (None) None in 
   let (pos, _) = result in 
-  Iter.to_list pos
+  let result = Iter.to_list pos in
+  List.map (fun s -> ((global_replace (regexp "ε") "" s))) result
 ;;
 
-let rec createConst ctx (params : parameter list) =
-  match params with 
-     [] -> []
-    | p :: xs -> [p.labelOfParam, mk_const_s ctx p.labelOfParam] @ createConst ctx xs
 
 let path_analise_word path w =
   if (Str.string_partial_match (Str.regexp path) w 0) 
@@ -56,7 +56,7 @@ let path_analise_word path w =
     else ("","")
 
 (* replace_first *)
-let rec path_to_list path alpha alpha_values =
+let rec _path_to_list path alpha alpha_values =
   match alpha with
     [] -> []
     | x :: xs -> 
@@ -64,20 +64,27 @@ let rec path_to_list path alpha alpha_values =
       then
         let result_l = path_analise_word path x in 
         match result_l with 
-          (x, y) when x <> "" -> [x] @ path_to_list y alpha_values alpha_values
-          | (_, _) -> path_to_list path xs alpha_values 
+          (x, y) when x <> "" -> [x] @ _path_to_list y alpha_values alpha_values
+          | (_, _) -> _path_to_list path xs alpha_values 
       else
         []
 
-let is_string_regex regex substring =
+let _is_string_regex regex substring =
   Str.string_match (Str.regexp regex) substring 0 
 
-let rec remove_first_three_elements l count =
+let rec _remove_first_three_elements l count =
   match count, l with
      _, [] -> []
     | 2, _ :: xs -> xs
-    | _, _ :: xs -> remove_first_three_elements xs (count + 1)
+    | _, _ :: xs -> _remove_first_three_elements xs (count + 1)
       
+(*
+
+let rec createConst ctx (params : parameter list) =
+  match params with 
+     [] -> []
+    | p :: xs -> [p.labelOfParam, mk_const_s ctx p.labelOfParam] @ createConst ctx xs
+
 let rec createAssertion ctx assertions =
   match assertions with 
     [] -> []
@@ -132,9 +139,10 @@ let rec createAssertion ctx assertions =
         let assert_expressions = cycle assert_clean (List.hd fexpr) in
         assert_expressions @ createAssertion ctx xs
 ;;
+*)
 
 (*
-*)
+
 let rec addExpressionsOfEachMethod ctx path (regexData : regexwithassertions) =
   match path with
     [] -> []
@@ -178,8 +186,8 @@ let rec createMethodsScript oc _path_list (operations : operation list) =
         else 
           Printf.fprintf oc "  local <- submit alice do\n";
         Printf.fprintf oc "    exerciseCmd local %s\n" local_operation.operationlabel; createMethodsScript oc xs operations
-;;
-
+;;*)
+(*
 let solve_path (path : string) templateLabel (alphabet : string list) result initS : unit =
   let cleaned_path = Str.(global_replace (regexp "ε") "" path) in 
   let _path_list = path_to_list cleaned_path alphabet alphabet in
@@ -224,28 +232,97 @@ let solve_path (path : string) templateLabel (alphabet : string list) result ini
   );
 ;;
 
+List.iter (Printf.printf "%s\n") result.possible_positive_cases;
+*)
+
+let _globalToAuto (global : Automata.Types_j.global) =
+  let alphabet = List.filter (fun a -> Bool.not (String.equal a "starts")) (List.map (fun t -> t.action) global.transitions) in
+  let transitions = ( List.map (fun t -> t.fromS, t.action, t.toS) (List.filter (fun t -> Bool.not (String.equal t.action "starts")) global.transitions)) in
+  { alphabet = alphabet; allStates = global.states; initialState = global.initialS;
+    transitions = transitions; acceptStates = global.endS }
+;;
+
+let getController transition =
+  match List.length transition.new_p with
+    0 -> List.nth transition.exi_p.parts 0
+    | _ -> (List.nth (List.nth transition.new_p 0).parts 0) 
+;;
+
+let createMethodsScript oc name (transition : transition_global) =
+  Printf.fprintf oc ("choice %s : %sId\n") transition.action name;
+  let deployer = getController transition in
+  Printf.fprintf oc ("controller %s \n") deployer;
+  Printf.fprintf oc ("do\n");
+  Printf.fprintf oc ("assertMsg \"Invalid State\" (this.state == %s)\n") transition.fromS;
+  Printf.fprintf oc ("create this with\n");
+  Printf.fprintf oc ("state = %s\n\n") transition.toS;
+;;
+
+let printResults reg (auto : automaton) =
+  Printf.printf "\nRegular expression\n";
+  Printf.printf "%s\n" reg;
+  
+  Printf.printf "\nTransitions\n";
+  List.iter (fun (a,b,c) -> Printf.printf "method %s, %s -> %s\n" b a c) auto.transitions;
+  
+  Printf.printf "\nPossible sequences\n";
+  List.iter (Printf.printf "%s\n") (gen_re @@ _regex auto)
+;;
+
+let autoToDaml name (global : Automata.Types_j.global) =
+  let oc = open_out (name ^ ".daml") in
+  Printf.fprintf oc ("module %s where\n") name;
+  Printf.fprintf oc ("type %sId = ContractId %s\n") name name;
+
+  Printf.fprintf oc ("data %sStateType\n") name;
+  List.iter (fun x ->  Printf.fprintf oc "|%s\n" x) global.states;
+  Printf.fprintf oc ("deriving (Eq, Show)\n\n");
+
+  
+  Printf.fprintf oc ("template %s\n") name;
+  Printf.fprintf oc ("state : %sStateType\n") name;
+  Printf.fprintf oc ("state : %sStateType\n") name;
+  List.iter (fun (x : association) -> List.iter (fun y -> 
+    Printf.fprintf oc ("%s : Party\n") y) x.parts) global.role_part;
+  Printf.fprintf oc ("where\n");
+  let filterTransition = (List.nth (List.nth (List.filter (fun (x : transition_global) -> String.equal "_" x.fromS) global.transitions) 0).new_p 0).parts in
+  let deployer = List.nth filterTransition 0 in 
+  Printf.fprintf oc ("signatory %s\n") deployer;
+  Printf.fprintf oc ("observer %s\n\n") deployer;
+  let (filteredTransitions :transition_global list) = List.filter (fun x -> Bool.not (String.equal "_" x.fromS)) global.transitions in
+  List.iter (createMethodsScript oc name) filteredTransitions;
+  close_out oc;
+;;  
+
 
 
 let setup =
-  let _global_t = Atdgen_runtime.Util.Json.from_file read_global "/home/camel/Desktop/generate_sc_behaviour/auto.json" in
-  
-  let lines = read_file "/home/camel/Desktop/generate_sc_behaviour/Hello.daml" in
+  let _global = Atdgen_runtime.Util.Json.from_file read_global "/home/camel/Desktop/git/generate_sc_behaviour/auto.json" in
+  let _autoTool = _globalToAuto _global in
+  let _regTool = _regex _autoTool in
+
+  printResults _regTool _autoTool;
+  autoToDaml "Auction" _global;
+
+  let lines = read_file "/home/camel/Desktop/git/generate_sc_behaviour/Hello.daml" in
   let _states = treatStates lines in
   let deploy = treatDeploy lines in
   let transitions = extractMethods lines false { operationlabel = ""; resultState = ""; requiredState = ""; parameters = []; preconditions = []; postconditions = []} deploy in
   let converted_methods = List.map (fun t -> (t.requiredState, t.operationlabel, t.resultState)) transitions in
   let alphabet = List.map (fun t -> t.operationlabel) transitions in
 
-  let _automaton = {alphabet = alphabet; allStates = _states; initialState = "S0"; transitions = converted_methods; acceptStates = ["S1"]} in
-  let regular_expression = _regex _automaton in
-  Printf.printf "Regular Expression\n %s\n" regular_expression;
-  let result = { regex = regular_expression; possible_positive_cases = gen_re @@ _regex _automaton; contract_input = deploy.parametersInput; operations = transitions} in  
- 
-  List.iter (fun x -> solve_path x deploy.templateLabel alphabet result "S0") result.possible_positive_cases;
+  let _autoDaml = {alphabet = alphabet; allStates = _states; initialState = "S0"; transitions = converted_methods; acceptStates = ["S2"]} in
+  let _regDaml = _regex _autoDaml in
 
+  let pSequenceTool = (gen_re @@ _regex _autoTool) in 
+  let pSequenceDaml = (gen_re @@ _regex _autoDaml) in
 
+  let subSet = List.for_all (fun x -> List.mem x pSequenceDaml) pSequenceTool in
+  match subSet with 
+    false -> Printf.printf "\nThere are sequences that are not covered in the contract.\n";
+    | true -> Printf.printf "\nEvery possible sequence in our representation is covered in the contract.\n";
 ;;
 
 setup;;
 
-Printf.printf "File Test executed.\n";;
+Printf.printf "\n";; 

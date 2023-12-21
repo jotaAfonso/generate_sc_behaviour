@@ -17,38 +17,23 @@ template HelloBlockChain
     signatory owner 
     observer owner
 
-    choice MakeOffer : HelloBlockChainId
-      controller owner
-      do
-          assertMsg "Invalid State" (this.state == S0) 
-      
-          create this with
-            state = S1
-
-    choice Accept : HelloBlockChainId
+    choice Bid : HelloBlockChainId
       controller owner
       do 
-          assertMsg "Invalid State" (this.state == S1)
+          assertMsg "Invalid State" (this.state == S0)
           create this with
-              state = S2
+              state = S1
     
-    choice Reject : HelloBlockChainId
+    choice Withdraw : HelloBlockChainId
       controller owner
       do 
           assertMsg "Invalid State" (this.state == S1)
           create this with
               state = S0
 
-    choice Thinks : HelloBlockChainId
+    choice End : HelloBlockChainId
       controller owner
       do 
-          assertMsg "Invalid State" (this.state == S2)
+          assertMsg "Invalid State" (this.state == S1)
           create this with
-              state = S3
-
-    choice AnotherOne : HelloBlockChainId
-      controller owner
-      do 
-          assertMsg "Invalid State" (this.state == S3)
-          create this with
-              state = S1
+              state = S2

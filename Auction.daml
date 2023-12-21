@@ -1,0 +1,39 @@
+module Auction where
+type AuctionId = ContractId Auction
+data AuctionStateType
+|S0
+|S1
+|S2
+deriving (Eq, Show)
+
+template Auction
+state : AuctionStateType
+state : AuctionStateType
+o : Party
+b : Party
+b1 : Party
+where
+signatory o
+observer o
+
+choice Withdraw : AuctionId
+controller b 
+do
+assertMsg "Invalid State" (this.state == S1)
+create this with
+state = S0
+
+choice Bid : AuctionId
+controller b 
+do
+assertMsg "Invalid State" (this.state == S0)
+create this with
+state = S1
+
+choice End : AuctionId
+controller o 
+do
+assertMsg "Invalid State" (this.state == S1)
+create this with
+state = S2
+
